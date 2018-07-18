@@ -15,6 +15,12 @@ from mpl_toolkits.mplot3d import Axes3D
 
 def plot_roc(k_th_fold, pig_id, time, y_true, y_pred, model_labels, evaluation_path):
     """
+    TODO EXPLAIN
+
+    TODO EXPLAIN WHY IT IS DIFFERENT TO THE STANDARD ROC IMPLEMENTATION
+
+    Category: binary classification
+
     Plotting an ROC in 4 different versions (see the j loop below):
         # j=1: x-y : FPR-TPR : unit-unit
         # j=2: x-y : FPR-TPR : log-unit

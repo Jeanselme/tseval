@@ -24,7 +24,8 @@ Installation
 
 TODO dependencies -> libraries
 TODO python interpreter
-TODO pip installation
+
+TODO pip installation -> https://packaging.python.org/tutorials/packaging-projects/
 
 
 Documentation
@@ -55,3 +56,6 @@ TODO
 - metrics to add:
     - y pred over time
     - scalar metrics FPR, TPR
+- scaler metrics: usage example
+
+- in general: make for anything in the library a usage example
