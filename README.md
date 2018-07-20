@@ -17,7 +17,7 @@ Time series tasks often highly differ from a regular classification or regressio
 * the *time* at which the observation was taken
 * the *time series* from which the observation is taken from, e.g. a particular patient when dealing with vital sign data or an article when dealing with NLP data
 
-Most standard libraries in Python, such as scipy-learn or seaborn, do not provide curves or evaluation tools to deal with the non-i.i.d. case. Out of this lack of suitable open-source tools for evaluation time series models, this library was built.
+Most standard libraries in Python, such as scipy-learn or seaborn, do not provide curves or evaluation tools to deal with the non-i.i.d. case. Out of this lack of suitable open-source tools for evaluating time series models, this library was built.
 
 Installation
 ------------
