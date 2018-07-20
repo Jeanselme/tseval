@@ -16,7 +16,8 @@ import os
 import numpy as np
 
 
-def plot_roc(k_th_fold, ts_id, time, y_true, y_pred, model_labels, evaluation_path):
+
+def plot_roc(k_th_fold, ts_id, time, y_true, y_pred, model_labels, evaluation_path, default=False):
     """
     Plotting an ROC in 4 different versions (see the j loop below):
         # j=1: x-y : FPR-TPR : unit-unit
@@ -29,13 +30,23 @@ def plot_roc(k_th_fold, ts_id, time, y_true, y_pred, model_labels, evaluation_pa
     passing a list of numpy.arrays to each of the parameters). Both versions
     also have different styles to display them.
 
-    :param k_th_fold: numpy.array (if one model) or list (if multiple models), column 0 in test_predictions.csv
-    :param ts_id: numpy.array (if one model) or list (if multiple models), column 1 in test_predictions.csv
-    :param time: numpy.array (if one model) or list (if multiple models), column 2 in test_predictions.csv
-    :param y_true: numpy.array (if one model) or list (if multiple models), column 3 in test_predictions.csv
-    :param y_pred: numpy.array (if one model) or list (if multiple models), column 4 in test_predictions.csv
-    :param evaluation_path: numpy.array (if one model) or list (if multiple models), column 5 in test_predictions.csv
+    :param k_th_fold: numpy.array (if one model) or list (if multiple models)
+    :param ts_id: numpy.array (if one model) or list (if multiple models)
+    :param time: numpy.array (if one model) or list (if multiple models)
+    :param y_true: numpy.array (if one model) or list (if multiple models)
+    :param y_pred: numpy.array (if one model) or list (if multiple models)
+    :param evaluation_path: numpy.array (if one model) or list (if multiple models)
     :return: none (saved plot)
+
+    TODO:
+    - cutoff point
+    - default on off
+    - write doc string better
+        - uses the sklearn implementation
+    - y_pred to y_score
+    - use common threshold
+
+
     """
     # new column order: 0:k_th_fold, 1:ts_id, 2:time, 3:y_true, 4:y_pred
 
@@ -54,7 +65,9 @@ def plot_roc(k_th_fold, ts_id, time, y_true, y_pred, model_labels, evaluation_pa
             raise AssertionError
         k_th_fold_list, ts_id_list, time_list, y_true_list, y_pred_list = k_th_fold, ts_id, time, y_true, y_pred  # plain assignment, since they are already lists
 
-    number_of_tests = len(k_th_fold_list) + 1  # + 1 for the default line
+    number_of_tests = len(k_th_fold_list)
+    if default:
+        number_of_tests +=  + 1  # + 1 for the default line
 
     # j=1: x-y : FPR-TPR : unit-unit
     # j=2: x-y : FPR-TPR : log-unit
@@ -86,21 +99,22 @@ def plot_roc(k_th_fold, ts_id, time, y_true, y_pred, model_labels, evaluation_pa
         random_line_y = random_line_x
         plt.plot(random_line_x, random_line_y, color='navy', linewidth=linewidth_line, linestyle='--')
 
-        # default prediction (always predict the most frequent class
-        # find all unique labels and their counts
-        all_labels, counts = np.unique(y_true, return_counts=True)
-        # find the label with the maximum number of counts
-        max_label_index = np.argmax(counts)
-        max_label = np.asscalar(all_labels[max_label_index])
-        # always predict the max label
-        y_pred_default = np.repeat(max_label, repeats=y_true.shape[0])
-        # make other dummy arrays as well, from first elements in the list
-        k_th_fold, ts_id, time = k_th_fold_list[0], ts_id_list[0], time_list[0]
-        k_th_fold_list.append(k_th_fold)
-        ts_id_list.append(ts_id)
-        time_list.append(time)
-        y_true_list.append(y_true)
-        y_pred_list.append(y_pred)
+        if default:
+            # default prediction (always predict the most frequent class
+            # find all unique labels and their counts
+            all_labels, counts = np.unique(y_true, return_counts=True)
+            # find the label with the maximum number of counts
+            max_label_index = np.argmax(counts)
+            max_label = np.asscalar(all_labels[max_label_index])
+            # always predict the max label
+            y_pred_default = np.repeat(max_label, repeats=y_true.shape[0])
+            # make other dummy arrays as well, from first elements in the list
+            k_th_fold, ts_id, time = k_th_fold_list[0], ts_id_list[0], time_list[0]
+            k_th_fold_list.append(k_th_fold)
+            ts_id_list.append(ts_id)
+            time_list.append(time)
+            y_true_list.append(y_true)
+            y_pred_list.append(y_pred)
 
         # looping over the models (if single: only one time running this loop)
         for m in range(number_of_tests):
@@ -151,22 +165,6 @@ def plot_roc(k_th_fold, ts_id, time, y_true, y_pred, model_labels, evaluation_pa
                 y_pred_round = y_pred[start_index:end_index]
 
 
-                # extract all rows of one pig
-                # pig_where = np.where(ts_id == id)
-                # k_th_fold_pig, ts_id_pig, time_pig, y_true_pig, y_pred_pig = k_th_fold[pig_where], ts_id[pig_where], time[pig_where], y_true[pig_where], y_pred[pig_where]
-
-
-                # test_predictions_pig = test_predictions[pig_where]
-                # y_true = test_predictions_pig[:,3].astype(float)
-                # y_pred = test_predictions_pig[:,4].astype(float)
-                # _true_pig = y_true_pig.astype(float)
-                # y_pred_pig = y_pred_pig.astype(float)
-
-                # print(id)
-                # print(pig_where)
-                # print(y_true_pig)
-                # print(y_pred_pig)
-
                 fpr_cur, tpr_cur, thresholds_cur = sklearn.metrics.roc_curve(y_true_round, y_pred_round)
                 fpr_cur, tpr_cur, thresholds_cur = np.array(fpr_cur), np.array(tpr_cur), np.array(thresholds_cur)
                 if j==3 or j==4:
@@ -187,8 +185,6 @@ def plot_roc(k_th_fold, ts_id, time, y_true, y_pred, model_labels, evaluation_pa
                     alpha = 1
                 elif style == 'multiple':
                     alpha = 0.3
-                plt.plot(fpr_cur, tpr_cur, color=colors[f],
-                         linewidth=linewidth_pigs, alpha=alpha) #, label=id   alpha=0.15     # label=ts_id + '_ROC curve (AUC = %0.2f)' % (auc_cur),alpha=0.2
 
             #add the ts_id label right next to the line
             # labelLines(plt.gca().get_lines(), zorder=2.5)  # turn on, if label displayed right next to line
@@ -215,8 +211,14 @@ def plot_roc(k_th_fold, ts_id, time, y_true, y_pred, model_labels, evaluation_pa
             elif style == 'multiple':
                 label = model_labels[m]
 
+            print("HIERO")
+            print(m)
+            print(number_of_tests)
+            print(base_fpr.shape)
+            print(mean_tprs.shape)
+
             # special case: the last ROC plotted is the default prediction
-            if m == number_of_tests-1:
+            if default and m == number_of_tests-1:
                 # plt.plot(random_line_x, random_line_y, color='navy', linewidth=linewidth_line, linestyle='--')
                 plt.plot(base_fpr, mean_tprs, color='green', linewidth=linewidth_line, label=label,
                          linestyle='--')
@@ -226,7 +228,7 @@ def plot_roc(k_th_fold, ts_id, time, y_true, y_pred, model_labels, evaluation_pa
 
             print('AUC: ', auc_mean)
             # regular case: not the default prediction
-            if m != len(k_th_fold_list) - 1:
+            if not default or m != len(k_th_fold_list) - 1:
                 plt.fill_between(base_fpr, tprs_lower, tprs_upper, color=fill_color, alpha=0.15)
 
             plt.tight_layout(pad=6)

@@ -173,7 +173,7 @@ def amoc_curve(time, y_score, ts_ids, k_fold_label=None):
             # store them in a per-time series dictionary
             data_by_ts[ts_id] = (y_true_ts, y_score_ts, time_ts)
             # add the negative observations of that time series
-            N = N + float(np.count_nonzero(y_true_ts == 0.0))
+            N = N + (y_true_ts == 0.0).sum()    # float(np.count_nonzero(y_true_ts == 0.0))
 
         # storing the data points for each threshold
         det_time_thres, FPR_thres = [], []
@@ -201,12 +201,11 @@ def amoc_curve(time, y_score, ts_ids, k_fold_label=None):
                 if not detected:
                     # assumption: adding the maximum observation time
                     det_time.append(time_ts.max())
-            try:
-                # division by N can fail, then just do not add data point
-                det_time_thres.append(np.mean(det_time))
-                FPR_thres.append(FP / N)
-            except:
-                pass
+
+            # division by N can fail, then just do not add data point
+            det_time_thres.append(np.mean(det_time))
+            FPR_thres.append(FP / N)
+
         det_time_folds.append(np.array(det_time_thres))
         FPR_folds.append(np.array(FPR_thres))
 
