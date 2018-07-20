@@ -232,7 +232,7 @@ def amoc_curve(time, y_score, ts_ids, k_fold_label=None):
     return time_to_detection, FPR_mean, FPR_std, thresholds
 
 
-def plot_amoc(time_list, y_score_list, ts_id_list, k_fold_label_list, model_labels, evaluation_path, conf_stds=1.0):
+def plot_amoc(time_list, y_score_list, ts_id_list, k_fold_label_list, model_labels, evaluation_path, conf_stds=1.0, time_unit='Minutes', xlim_max=5):
     """
     Example of how to use the amoc_curve() function with multiple test sets to compare.
 
@@ -244,6 +244,13 @@ def plot_amoc(time_list, y_score_list, ts_id_list, k_fold_label_list, model_labe
     :param evaluation_path: a string of the path where to save the AMOC figures to.
     :param conf_stds: controlling how thick the confidence bounds are in temrs of multiples of the standard deviation.
             Default: 1 standard deviation
+    :param xlim_max: upper limit of the x-axis (horizontal axis)
+
+    Possible improvements
+    ---------------------
+
+    - in the log plot, cut off at 10^-3 FPR and time axis accordingly
+
     """
 
     number_of_curves = len(y_score_list)
@@ -263,7 +270,6 @@ def plot_amoc(time_list, y_score_list, ts_id_list, k_fold_label_list, model_labe
         fig = plt.figure(figsize=(8.0, 5.0))
         ax = fig.add_subplot(111)
         colors = ['blue', 'orange', 'green', 'purple', 'grey']
-        x_axis_max = 5  # upper bound of x axis
         global_min = 1.0
         for c in range(number_of_curves):
             time_to_detection, FPR_mean, FPR_std, thresholds = time_to_detection_list[c], FPR_mean_list[c], FPR_std_list[c], thresholds_list[c]
@@ -274,12 +280,12 @@ def plot_amoc(time_list, y_score_list, ts_id_list, k_fold_label_list, model_labe
             # plot the confidence bounds
             plt.fill_between(time_to_detection, lower_conf, upper_conf, color=colors[c], alpha=0.15)
             # find global minimum in plot for y axis in log plot
-            lower_conf_plotted = lower_conf[time_to_detection <= x_axis_max]
+            lower_conf_plotted = lower_conf[time_to_detection <= xlim_max]
             global_min = min(lower_conf_plotted.min(), global_min)
         # cosmetics
         plt.title('Activity Monitoring Operating Characteristic (AMOC)')
-        plt.xlabel('Time to detection (minutes)', fontsize='large')
-        plt.xlim(xmin=0, xmax=x_axis_max)
+        plt.xlabel('Time to detection [' + time_unit + ']', fontsize='large')
+        plt.xlim(xmin=0, xmax=xlim_max)
         plt.legend(loc='upper right', prop={'size': 9})
 
         # reg scale

@@ -65,6 +65,7 @@ def plot_roc(k_th_fold, ts_id, time, y_true, y_score, model_labels, evaluation_p
     - input checks for the funciton parameters
     - instead of looping with j, make more efficient implementation that computes the curves just once and plots 4 times
     - the variable names tpr and fpr are wrong when computing tnr and fnr (j=3, 4) -> should be corrected for better style
+    - cut-off point in log plots as parameter
 
     """
     # differentiate whether multiple models or one model is used
