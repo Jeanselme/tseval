@@ -7,7 +7,14 @@ from math import floor, log
 
 from sklearn.utils import check_consistent_length, column_or_1d, assert_all_finite
 
+"""
+Notes on submitting AMOC:
 
+The implementation of the amoc_curve(...) function is aligned and made consistent with the
+roc_curve(...) function (compare [1]), since I assumed many people were familiar with it.
+
+[1] https://github.com/scikit-learn/scikit-learn/blob/a24c8b46/sklearn/metrics/ranking.py#L453
+"""
 
 
 def amoc_curve(time, y_score, ts_ids, k_fold_label=None):
@@ -194,8 +201,12 @@ def amoc_curve(time, y_score, ts_ids, k_fold_label=None):
                 if not detected:
                     # assumption: adding the maximum observation time
                     det_time.append(time_ts.max())
-            det_time_thres.append(np.mean(det_time))
-            FPR_thres.append(FP / N)
+            try:
+                # division by N can fail, then just do not add data point
+                det_time_thres.append(np.mean(det_time))
+                FPR_thres.append(FP / N)
+            except:
+                pass
         det_time_folds.append(np.array(det_time_thres))
         FPR_folds.append(np.array(FPR_thres))
 
@@ -220,7 +231,6 @@ def amoc_curve(time, y_score, ts_ids, k_fold_label=None):
     FPR_std = np.std(FPR_interps, axis=0)
 
     return time_to_detection, FPR_mean, FPR_std, thresholds
-
 
 
 def plot_amoc(time_list, y_score_list, ts_id_list, k_fold_label_list, model_labels, evaluation_path, conf_stds=1.0):

@@ -5,7 +5,7 @@ from sklearn.metrics import accuracy_score, log_loss, roc_auc_score
 from sklearn.metrics import explained_variance_score, mean_absolute_error, mean_squared_error, median_absolute_error, r2_score
 import pickle
 import os
-from Evaluation.ROC import convert_to_fnr_tnr
+from tseval.curves.ROC import convert_to_fnr_tnr
 import numpy as np
 import sklearn
 from sklearn.metrics import roc_auc_score
@@ -406,4 +406,264 @@ def add_default_values(y_true, y_score, threshold, scalar_metrics):
 
     return scalar_metrics_new
 
+
+
+
+
+# ---------------------------------------------------------------------------------------------------------------------------
+#
+#
+#
+# def evaluate_scalar_metrics_classification(k_th_fold, pig_id, time, y_true, y_pred, evaluation_metrics, evaluation_path):
+#     # test_predictions.reshape((test_predictions.shape[0], test_predictions.shape[1]))
+#
+#     cross_entropy_kth_list, accuracy_kth_list, auc_kth_list = [], [], []
+#
+#     tpr_at_fpr_001_list, tpr_at_fpr_0001_list, fpr_at_tpr_05_list, tnr_at_fnr_001_list, fnr_at_tnr_05_list = [], [], [], [], []
+#
+#     # split the arrays into n test rows, only for the purpose of computing standard deviations)
+#     n_test_rounds = 1  # if 1: std is 0
+#     # split the indices into n_test_folds parts
+#     n_rows_total = int(k_th_fold.shape[0])  # int conversion so that indices are integers
+#     n_rows_part = int(n_rows_total / n_test_rounds)  # int conversion so that indices are integers
+#     row_indices_parts = []  # contains tuples: (start_index_part, end_index_part) for numpy row indexing
+#     for i in range(n_test_rounds):
+#         # special case: for the last part, just use the rest of the indices
+#         if i == n_test_rounds - 1:
+#             row_indices_parts.append((i * n_rows_part, n_rows_total))
+#         # regular case
+#         else:
+#             row_indices_parts.append((i * n_rows_part, (i + 1) * n_rows_part))
+#
+#     for k_th in range(n_test_rounds):
+#
+#     # scalar metrics computed for each fold separately
+#     # for k_th in range():
+#         # test_pig_ids = configs['tvt_id_split'][k_th][2]
+#
+#         # data of one fold / round
+#         # extract start and end index for all arrays
+#         start_index, end_index = row_indices_parts[k_th]
+#         # extract the sub arrays for this fold
+#         k_th_fold_kth = k_th_fold[start_index:end_index]
+#         ts_id_kth = pig_id[start_index:end_index]
+#         time_kth = time[start_index:end_index]
+#         y_true_kth = y_true[start_index:end_index]
+#         y_pred_kth = y_pred[start_index:end_index]
+#
+#
+#         # data of one fold
+#         # kth_where = numpy.where(k_th_fold == k_th)[0]
+#         # k_th_fold_kth, pig_id_kth, time_kth, y_true_kth, y_pred_kth = k_th_fold[kth_where], pig_id[kth_where], time[kth_where], y_true[kth_where], y_pred[kth_where]
+#         # test_predictions_kth = test_predictions[kth_where, :]
+#
+#         # print(test_predictions_kth)
+#         # y_pred_kth = test_predictions_kth[:, 4].astype(numpy.float)  # attention! -> see above
+#         # y_true_kth = test_predictions_kth[:, 3].astype(numpy.float)
+#         y_pred_kth, y_true_kth = y_pred_kth.reshape((y_pred_kth.shape[0], 1)), y_true_kth.reshape((y_true_kth.shape[0], 1))
+#
+#         y_pred_rounded_kth = numpy.empty_like(y_pred_kth)
+#         for i in range(y_pred_kth.shape[0]):
+#             y_pred_rounded_kth[i, 0] = 0 if y_pred_kth[i, 0] < 0.5 else 1  # numpy.around(self.train_concat_y_pred)
+#
+#         cross_entropy_kth = log_loss(y_true_kth, y_pred_kth)
+#         #print('hier')
+#         #print(y_true_kth.shape)
+#         #print(y_pred_rounded_kth.shape)
+#         TP, FP, TN, FN = tp_fp_tn_fn(y_true_kth, y_pred_rounded_kth)
+#         accuracy_kth = accuracy_score(y_true_kth, y_pred_rounded_kth)
+#         auc_kth = roc_auc_score(y_true_kth, y_pred_kth)
+#
+#         #other metrics
+#         fpr_cur, tpr_cur, thresholds_cur = sklearn.metrics.roc_curve(y_true_kth, y_pred_kth)
+#         fpr_cur, tpr_cur, thresholds_cur = np.array(fpr_cur), np.array(tpr_cur), np.array(thresholds_cur)
+#         fnr_cur, tnr_cur = convert_to_fnr_tnr(fpr_cur, tpr_cur)
+#         fnr_cur, tnr_cur = np.flip(fnr_cur, axis=0), np.flip(tnr_cur, axis=0)
+#         auc_cur = roc_auc_score(y_true_kth, y_pred_kth)
+#         fpr_cur, tpr_cur, fnr_cur, tnr_cur = fpr_cur.ravel().tolist(), tpr_cur.ravel().tolist(), fnr_cur.ravel().tolist(), tnr_cur.ravel().tolist()
+#         #sort the arrays (currently sorted descending)
+#         fpr_cur, tpr_cur = [x for x in sorted(fpr_cur)], [x for x in sorted(tpr_cur)]
+#         fnr_cur, tnr_cur = [x for x in sorted(fnr_cur)], [x for x in sorted(tnr_cur)]
+#
+#
+#         #tpr@fpr=1%, 0.1%
+#         tpr_at_fpr_001_found = False
+#         tpr_at_fpr_0001_found = False
+#         for i, fpr in enumerate(fpr_cur):
+#             if fpr > 0.01 and tpr_at_fpr_001_found==False:
+#                 try:
+#                     fract_to = (0.01 - fpr_cur[i-1]) / (fpr_cur[i] - fpr_cur[i-1])
+#                 except:
+#                     fract_to = 0.0
+#                 tpr_at_fpr_001_kth = tpr_cur[i-1] + fract_to * (tpr_cur[i] - tpr_cur[i-1])
+#                 #print(tpr_cur[i - 1])
+#                 break
+#         for i, fpr in enumerate(fpr_cur):
+#             if fpr > 0.001 and tpr_at_fpr_0001_found == False:
+#                 try:
+#                     fract_to = (0.001 - fpr_cur[i - 1]) / (fpr_cur[i] - fpr_cur[i - 1])
+#                 except:
+#                     fract_to = 0.0
+#                 tpr_at_fpr_0001_kth = tpr_cur[i - 1] + fract_to * (tpr_cur[i] - tpr_cur[i - 1])
+#                 #print(tpr_cur[i - 1])
+#                 break
+#
+#         #fpr@tpr=0.5
+#         fpr_at_tpr_05_found = False
+#         for i, tpr in enumerate(tpr_cur):
+#             if tpr > 0.5 and fpr_at_tpr_05_found == False:
+#                 try:
+#                     fract_to = (0.5 - tpr_cur[i - 1]) / (tpr_cur[i] - tpr_cur[i - 1])
+#                 except:
+#                     fract_to = 0.0
+#                 fpr_at_tpr_05_kth = fpr_cur[i - 1] + fract_to * (fpr_cur[i] - fpr_cur[i - 1])
+#                 #print(tpr_cur[i - 1])
+#                 break
+#
+#         #AUC done above
+#
+#         #tnr@fnr=1%
+#         #print('HIER')
+#         #print(max(tnr_cur))
+#         tnr_at_fnr_001_found = False
+#         for i, fnr in enumerate(fnr_cur):
+#             if fnr > 0.01 and tnr_at_fnr_001_found == False:
+#                 try:
+#                     fract_to = (0.01 - fnr_cur[i - 1]) / (fnr_cur[i] - fnr_cur[i - 1])
+#                 except:
+#                     fract_to = 0.0
+#                 #print('THERE')
+#                 #print(tnr_cur[i - 1])
+#                 #print('FRACT TO')
+#                 #print(fract_to)
+#                 tnr_at_fnr_001_kth = tnr_cur[i - 1] + fract_to * (tnr_cur[i] - tnr_cur[i - 1])
+#                 #print('this')
+#                 #print(tnr_cur[i - 1])
+#                 break
+#
+#
+#         #fnr@tnr=0.5
+#         fnr_at_tnr_05_found = False
+#         for i, tnr in enumerate(tnr_cur):
+#             if tnr > 0.5 and fnr_at_tnr_05_found == False:
+#                 try:
+#                     fract_to = (0.5 - tnr_cur[i - 1]) / (tnr_cur[i] - tnr_cur[i - 1])
+#                 except:
+#                     fract_to = 0.0
+#                 fnr_at_tnr_05_kth = fnr_cur[i - 1] + fract_to * (fnr_cur[i] - fnr_cur[i - 1])
+#                 #print('BERE')
+#                 #print(fnr_cur[i])
+#                 #print(fnr_cur[i - 1])
+#                 break
+#
+#
+#
+#         # print(k_th)
+#         # print(auc_kth)
+#         # print(tpr_at_fpr_001_kth)  # checked
+#         # print(tpr_at_fpr_0001_kth) # checked
+#         # print(fpr_at_tpr_05_kth)  # checked
+#         # print(tnr_at_fnr_001_kth)  # checked works!
+#         # print(fnr_at_tnr_05_kth)  # checked works!
+#
+#
+#
+#             #print(tpr_cur[i-1])
+#             #print(tpr_cur[i])
+#             #print(tpr_at_fpr_001)
+#
+#
+#         k_th_string = str(k_th)
+#         evaluation_metrics['test_cost_' + k_th_string + '_th_fold'] = cross_entropy_kth
+#         evaluation_metrics['test_accuracy_' + k_th_string + '_th_fold'] = accuracy_kth
+#         evaluation_metrics['test_auc_' + k_th_string + '_th_fold'] = auc_kth
+#
+#         evaluation_metrics['tpr_at_fpr_001_' + k_th_string + '_th_fold'] = tpr_at_fpr_001_kth
+#         evaluation_metrics['tpr_at_fpr_0001_' + k_th_string + '_th_fold'] = tpr_at_fpr_0001_kth
+#         evaluation_metrics['fpr_at_tpr_05_' + k_th_string + '_th_fold'] = fpr_at_tpr_05_kth
+#         evaluation_metrics['tnr_at_fnr_001_' + k_th_string + '_th_fold'] = tnr_at_fnr_001_kth
+#         evaluation_metrics['fnr_at_tnr_05_' + k_th_string + '_th_fold'] = fnr_at_tnr_05_kth
+#
+#         cross_entropy_kth_list.append(cross_entropy_kth)
+#         accuracy_kth_list.append(accuracy_kth)
+#         auc_kth_list.append(auc_kth)
+#
+#         tpr_at_fpr_001_list.append(tpr_at_fpr_001_kth), tpr_at_fpr_0001_list.append(tpr_at_fpr_0001_kth), fpr_at_tpr_05_list.append(fpr_at_tpr_05_kth), tnr_at_fnr_001_list.append(tnr_at_fnr_001_kth), fnr_at_tnr_05_list.append(fnr_at_tnr_05_kth)
+#
+#
+#     test_cross_entropy_model, test_accuracy_model, test_auc_model = numpy.mean(cross_entropy_kth_list), numpy.mean(
+#         accuracy_kth_list), numpy.mean(auc_kth_list)
+#
+#     test_cross_entropy_model_std, test_accuracy_model_std, test_auc_model_std = numpy.std(cross_entropy_kth_list), numpy.std(
+#         accuracy_kth_list), numpy.std(auc_kth_list)
+#
+#     tpr_at_fpr_001_model, tpr_at_fpr_0001_model, fpr_at_tpr_05_model, tnr_at_fnr_001_model, fnr_at_tnr_05_model = numpy.mean(tpr_at_fpr_001_list), numpy.mean(tpr_at_fpr_0001_list), numpy.mean(fpr_at_tpr_05_list), numpy.mean(tnr_at_fnr_001_list), numpy.mean(fnr_at_tnr_05_list)
+#
+#     tpr_at_fpr_001_model_std, tpr_at_fpr_0001_model_std, fpr_at_tpr_05_model_std, tnr_at_fnr_001_model_std, fnr_at_tnr_05_model_std = numpy.std(
+#         tpr_at_fpr_001_list), numpy.std(tpr_at_fpr_0001_list), numpy.std(fpr_at_tpr_05_list), numpy.std(
+#         tnr_at_fnr_001_list), numpy.std(fnr_at_tnr_05_list)
+#
+#
+#     evaluation_metrics['test_cost_model'] = test_cross_entropy_model
+#     evaluation_metrics['test_accuracy_model'] = test_accuracy_model
+#     evaluation_metrics['test_auc_model'] = test_auc_model
+#
+#     evaluation_metrics['test_cost_model_std'] = test_cross_entropy_model_std
+#     evaluation_metrics['test_accuracy_model_std'] = test_accuracy_model_std
+#     evaluation_metrics['test_auc_model_std'] = test_auc_model_std
+#
+#     # print('MODEL')
+#     # print(test_auc_model)
+#     # print(tpr_at_fpr_001_model)  # checked
+#     # print(tpr_at_fpr_0001_model)  # checkd
+#     # print(fpr_at_tpr_05_model)  # checked
+#     # print(tnr_at_fnr_001_model)  #
+#     # print(fnr_at_tnr_05_model)  #
+#
+#     evaluation_metrics['tpr_at_fpr_001_model'] = tpr_at_fpr_001_model
+#     evaluation_metrics['tpr_at_fpr_0001_model'] = tpr_at_fpr_0001_model
+#     evaluation_metrics['fpr_at_tpr_05_model'] = fpr_at_tpr_05_model
+#     evaluation_metrics['tnr_at_fnr_001_model'] = tnr_at_fnr_001_model
+#     evaluation_metrics['fnr_at_tnr_05_model'] = fnr_at_tnr_05_model
+#
+#     evaluation_metrics['tpr_at_fpr_001_model_std'] = tpr_at_fpr_001_model_std
+#     evaluation_metrics['tpr_at_fpr_0001_model_std'] = tpr_at_fpr_0001_model_std
+#     evaluation_metrics['fpr_at_tpr_05_model_std'] = fpr_at_tpr_05_model_std
+#     evaluation_metrics['tnr_at_fnr_001_model_std'] = tnr_at_fnr_001_model_std
+#     evaluation_metrics['fnr_at_tnr_05_model_std'] = fnr_at_tnr_05_model_std
+#
+#     # save metrics dictionary
+#     #print(os.path.join(evaluation_path, 'evaluation_metrics.pkl'))
+#     evaluation_metrics_file = open(os.path.join(evaluation_path, 'evaluation_metrics.pkl'), 'wb')
+#     pickle.dump(evaluation_metrics, evaluation_metrics_file)
+#     evaluation_metrics_file.close()
+#
+#     # save metrics dictionary to human readable format
+#     evaluation_metrics_txt_file = open(os.path.join(evaluation_path, 'evaluation_metrics.txt'), 'wb')
+#     evaluation_metrics_txt_file.write(bytes('Evaluation_single metrics: ' + '\n', 'UTF-8'))
+#     for k, v in evaluation_metrics.items():
+#         evaluation_metrics_txt_file.write(bytes(str(k) + ': ' + str(v) + '\n', 'UTF-8'))
+#     evaluation_metrics_txt_file.write(bytes('\n', 'UTF-8'))
+#     evaluation_metrics_txt_file.close()
+
+
+# def tp_fp_tn_fn(y_actual, y_hat):
+#     #source: http://stackoverflow.com/questions/31324218/scikit-learn-how-to-obtain-true-positive-true-negative-false-positive-and-fal
+#     TP = 0
+#     FP = 0
+#     TN = 0
+#     FN = 0
+#     for i in range(len(y_hat)):
+#         if y_actual[i,0]==y_hat[i,0]==1:
+#             TP += 1
+#     for i in range(len(y_hat)):
+#         if y_hat[i,0]==1 and y_actual[i,0]!=y_hat[i,0]:
+#             FP += 1
+#     for i in range(len(y_hat)):
+#         if y_actual[i,0]==y_hat[i,0]==0:
+#             TN += 1
+#     for i in range(len(y_hat)):
+#         if y_hat[i,0]==0 and y_actual[i,0]!=y_hat[i,0]:
+#             FN += 1
+#     return(float(TP), float(FP), float(TN), float(FN))
 

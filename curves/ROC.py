@@ -1,26 +1,23 @@
+"""
+ TODO EXPLAIN
+
+ TODO EXPLAIN WHY IT IS DIFFERENT TO THE STANDARD ROC IMPLEMENTATION
+
+ Category: binary classification
+ """
 
 
-import matplotlib
-matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
-import numpy as np
 import sklearn
 from sklearn.metrics import roc_auc_score
+from sklearn.utils import shuffle
 import os
-from sklearn.metrics import auc
-from math import atan2,degrees
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
 
 
-def plot_roc(k_th_fold, pig_id, time, y_true, y_pred, model_labels, evaluation_path):
+def plot_roc(k_th_fold, ts_id, time, y_true, y_pred, model_labels, evaluation_path):
     """
-    TODO EXPLAIN
-
-    TODO EXPLAIN WHY IT IS DIFFERENT TO THE STANDARD ROC IMPLEMENTATION
-
-    Category: binary classification
-
     Plotting an ROC in 4 different versions (see the j loop below):
         # j=1: x-y : FPR-TPR : unit-unit
         # j=2: x-y : FPR-TPR : log-unit
@@ -33,31 +30,31 @@ def plot_roc(k_th_fold, pig_id, time, y_true, y_pred, model_labels, evaluation_p
     also have different styles to display them.
 
     :param k_th_fold: numpy.array (if one model) or list (if multiple models), column 0 in test_predictions.csv
-    :param pig_id: numpy.array (if one model) or list (if multiple models), column 1 in test_predictions.csv
+    :param ts_id: numpy.array (if one model) or list (if multiple models), column 1 in test_predictions.csv
     :param time: numpy.array (if one model) or list (if multiple models), column 2 in test_predictions.csv
     :param y_true: numpy.array (if one model) or list (if multiple models), column 3 in test_predictions.csv
     :param y_pred: numpy.array (if one model) or list (if multiple models), column 4 in test_predictions.csv
     :param evaluation_path: numpy.array (if one model) or list (if multiple models), column 5 in test_predictions.csv
     :return: none (saved plot)
     """
-    # new column order: 0:k_th_fold, 1:pig_id, 2:time, 3:y_true, 4:y_pred
+    # new column order: 0:k_th_fold, 1:ts_id, 2:time, 3:y_true, 4:y_pred
 
     # differentiate whether multiple models or one model is used
     # print(type(k_th_fold))
     if type(k_th_fold) == np.ndarray:
         style = 'single'
         # for implementation reasons, we have to wrap the numpy.ndarrays into list if only the arrays are passed
-        k_th_fold_list, pig_id_list, time_list, y_true_list, y_pred_list = [k_th_fold], [pig_id], [time], [y_true], [y_pred]
+        k_th_fold_list, ts_id_list, time_list, y_true_list, y_pred_list = [k_th_fold], [ts_id], [time], [y_true], [y_pred]
     else:
         style = 'multiple'
         # the parameters of the function are lists of numpy.arrays (except for the evaluation_path)
         # check that the parameters are lists and that the lists are equally long
-        if not (type(k_th_fold)==list and type(pig_id)==list and type(time)==list and type(y_true)==list and type(y_pred)==list) and \
-                (len(k_th_fold) == len(pig_id) == len(time) == len(y_true) == len(y_pred)):
+        if not (type(k_th_fold)==list and type(ts_id)==list and type(time)==list and type(y_true)==list and type(y_pred)==list) and \
+                (len(k_th_fold) == len(ts_id) == len(time) == len(y_true) == len(y_pred)):
             raise AssertionError
-        k_th_fold_list, pig_id_list, time_list, y_true_list, y_pred_list = k_th_fold, pig_id, time, y_true, y_pred  # plain assignment, since they are already lists
-    number_of_tests = len(k_th_fold_list)
+        k_th_fold_list, ts_id_list, time_list, y_true_list, y_pred_list = k_th_fold, ts_id, time, y_true, y_pred  # plain assignment, since they are already lists
 
+    number_of_tests = len(k_th_fold_list) + 1  # + 1 for the default line
 
     # j=1: x-y : FPR-TPR : unit-unit
     # j=2: x-y : FPR-TPR : log-unit
@@ -84,25 +81,57 @@ def plot_roc(k_th_fold, pig_id, time, y_true, y_pred, model_labels, evaluation_p
         cmap_list = ['Blues', 'Oranges', 'Greens', 'Purples', 'Greys']  # Purple
         average_color_list = ['blue', 'orange', 'green', 'purple', 'grey']
 
-        #correct --- line
+        #correct --- line (upper triangular)
         random_line_x = np.linspace(0,1,201)
         random_line_y = random_line_x
         plt.plot(random_line_x, random_line_y, color='navy', linewidth=linewidth_line, linestyle='--')
 
+        # default prediction (always predict the most frequent class
+        # find all unique labels and their counts
+        all_labels, counts = np.unique(y_true, return_counts=True)
+        # find the label with the maximum number of counts
+        max_label_index = np.argmax(counts)
+        max_label = np.asscalar(all_labels[max_label_index])
+        # always predict the max label
+        y_pred_default = np.repeat(max_label, repeats=y_true.shape[0])
+        # make other dummy arrays as well, from first elements in the list
+        k_th_fold, ts_id, time = k_th_fold_list[0], ts_id_list[0], time_list[0]
+        k_th_fold_list.append(k_th_fold)
+        ts_id_list.append(ts_id)
+        time_list.append(time)
+        y_true_list.append(y_true)
+        y_pred_list.append(y_pred)
+
         # looping over the models (if single: only one time running this loop)
         for m in range(number_of_tests):
             # will overwrite parameters of functions, but they are no longer needed (since stored in corresponding ..._list variables)
-            k_th_fold, pig_id, time, y_true, y_pred = k_th_fold_list[m], pig_id_list[m], time_list[m], y_true_list[m], y_pred_list[m]
+            k_th_fold, ts_id, time, y_true, y_pred = k_th_fold_list[m], ts_id_list[m], time_list[m], y_true_list[m], y_pred_list[m]
 
             # find all unique piggs
-            unique_pig_ids = np.unique(pig_id)
+            # unique_ts_ids = np.unique(ts_id)
 
-            total_test_pigs_count = len(unique_pig_ids)
+            # shuffle all arrays consistently
+            k_th_fold, ts_id, time, y_true, y_pred = shuffle(k_th_fold, ts_id, time, y_true, y_pred)
+
+            # split the arrays into n test rows, only for the purpose of computing confidence bounds
+            n_test_rounds = 3
+            # split the indices into n_test_folds parts
+            n_rows_total = int(k_th_fold.shape[0])  # int conversion so that indices are integers
+            n_rows_part = int(n_rows_total / n_test_rounds)  # int conversion so that indices are integers
+            row_indices_parts = []  #  contains tuples: (start_index_part, end_index_part) for numpy row indexing
+            for i in range(n_test_rounds):
+                # special case: for the last part, just use the rest of the indices
+                if i == n_test_rounds - 1:
+                    row_indices_parts.append( (i * n_rows_part, n_rows_total ) )
+                # regular case
+                else:
+                    row_indices_parts.append( (i * n_rows_part, (i + 1) * n_rows_part) )
+
             if style == 'single':
                 cmap = plt.get_cmap('jet')
             elif style == 'multiple':
                 cmap = plt.get_cmap(cmap_list[m])
-            colors = cmap(np.linspace(0, 1, total_test_pigs_count))
+            colors = cmap(np.linspace(0, 1, n_test_rounds))
             fprs, tprs, thresholds_list, aucs, ids = 'ph', [], 'ph', [], []
             # base_fpr_1 = np.linspace(10 ** (-7), 10 ** (-5), 101)
             base_fpr_1 = np.linspace(10 ** (-5), 10 ** (-2), 101)
@@ -110,12 +139,21 @@ def plot_roc(k_th_fold, pig_id, time, y_true, y_pred, model_labels, evaluation_p
             base_fpr = np.concatenate((base_fpr_1, base_fpr_2))
             # base_fpr = np.linspace(0, 1, 101)
 
-            # print(m)
             # looping over the pigs
-            for p, id in enumerate(unique_pig_ids):
+            for f in range(n_test_rounds):
+                # extract start and end index for all arrays
+                start_index, end_index = row_indices_parts[f]
+                # extract the sub arrays for this fold
+                k_th_fold_round = k_th_fold[start_index:end_index]
+                ts_id_round = ts_id[start_index:end_index]
+                time_round = time[start_index:end_index]
+                y_true_round = y_true[start_index:end_index]
+                y_pred_round = y_pred[start_index:end_index]
+
+
                 # extract all rows of one pig
-                pig_where = np.where(pig_id == id)
-                k_th_fold_pig, pig_id_pig, time_pig, y_true_pig, y_pred_pig = k_th_fold[pig_where], pig_id[pig_where], time[pig_where], y_true[pig_where], y_pred[pig_where]
+                # pig_where = np.where(ts_id == id)
+                # k_th_fold_pig, ts_id_pig, time_pig, y_true_pig, y_pred_pig = k_th_fold[pig_where], ts_id[pig_where], time[pig_where], y_true[pig_where], y_pred[pig_where]
 
 
                 # test_predictions_pig = test_predictions[pig_where]
@@ -129,14 +167,15 @@ def plot_roc(k_th_fold, pig_id, time, y_true, y_pred, model_labels, evaluation_p
                 # print(y_true_pig)
                 # print(y_pred_pig)
 
-                fpr_cur, tpr_cur, thresholds_cur = sklearn.metrics.roc_curve(y_true_pig, y_pred_pig)
+                fpr_cur, tpr_cur, thresholds_cur = sklearn.metrics.roc_curve(y_true_round, y_pred_round)
                 fpr_cur, tpr_cur, thresholds_cur = np.array(fpr_cur), np.array(tpr_cur), np.array(thresholds_cur)
                 if j==3 or j==4:
                     fpr_cur, tpr_cur = convert_to_fnr_tnr(fpr_cur, tpr_cur)
                     fpr_cur, tpr_cur = np.flip(fpr_cur, axis=0), np.flip(tpr_cur, axis=0)
 
-                auc_cur = roc_auc_score(y_true_pig, y_pred_pig)
+                auc_cur = roc_auc_score(y_true_round, y_pred_round)
                 tpr = np.interp(base_fpr, fpr_cur, tpr_cur)
+
                 if j==1:
                     tpr[0] = 0.0
                 tprs.append(tpr)
@@ -148,10 +187,10 @@ def plot_roc(k_th_fold, pig_id, time, y_true, y_pred, model_labels, evaluation_p
                     alpha = 1
                 elif style == 'multiple':
                     alpha = 0.3
-                plt.plot(fpr_cur, tpr_cur, color=colors[p],
-                         linewidth=linewidth_pigs, alpha=alpha) #, label=id   alpha=0.15     # label=pig_id + '_ROC curve (AUC = %0.2f)' % (auc_cur),alpha=0.2
+                plt.plot(fpr_cur, tpr_cur, color=colors[f],
+                         linewidth=linewidth_pigs, alpha=alpha) #, label=id   alpha=0.15     # label=ts_id + '_ROC curve (AUC = %0.2f)' % (auc_cur),alpha=0.2
 
-            #add the pig_id label right next to the line
+            #add the ts_id label right next to the line
             # labelLines(plt.gca().get_lines(), zorder=2.5)  # turn on, if label displayed right next to line
 
             # calculate average ROC
@@ -176,10 +215,19 @@ def plot_roc(k_th_fold, pig_id, time, y_true, y_pred, model_labels, evaluation_p
             elif style == 'multiple':
                 label = model_labels[m]
 
-            plt.plot(base_fpr, mean_tprs, color=average_color, linewidth=linewidth_mean,
-                label=label)   # label=str('Mean test-ROC') + ' (AUC = %0.2f)' % (auc_mean)
+            # special case: the last ROC plotted is the default prediction
+            if m == number_of_tests-1:
+                # plt.plot(random_line_x, random_line_y, color='navy', linewidth=linewidth_line, linestyle='--')
+                plt.plot(base_fpr, mean_tprs, color='green', linewidth=linewidth_line, label=label,
+                         linestyle='--')
+            # regular case: normal model ROC plotted
+            else:
+                plt.plot(base_fpr, mean_tprs, color=average_color, linewidth=linewidth_mean, label=label)   # label=str('Mean test-ROC') + ' (AUC = %0.2f)' % (auc_mean)
+
             print('AUC: ', auc_mean)
-            plt.fill_between(base_fpr, tprs_lower, tprs_upper, color=fill_color, alpha=0.15)
+            # regular case: not the default prediction
+            if m != len(k_th_fold_list) - 1:
+                plt.fill_between(base_fpr, tprs_lower, tprs_upper, color=fill_color, alpha=0.15)
 
             plt.tight_layout(pad=6)
 
@@ -209,11 +257,12 @@ def plot_roc(k_th_fold, pig_id, time, y_true, y_pred, model_labels, evaluation_p
             plt.xlim(cut_off_point, 1.0)
 
         if style == 'multiple':
-            plt.legend(loc='upper left', prop={'size': 9})
+            plt.legend(loc='bottom right', prop={'size': 9})
         # ax.legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size': 4})  #
 
-        plt.savefig(os.path.join(evaluation_path, 'ROC' + name + '.pdf'), format='pdf', dpi=1200)
+        plt.savefig(os.path.join(evaluation_path, 'ROC' + name + '.pdf'), format='pdf', dpi=2000)
         #plt.show()
+
 
 
 def convert_to_fnr_tnr(fpr_cur, tpr_cur):
@@ -222,4 +271,8 @@ def convert_to_fnr_tnr(fpr_cur, tpr_cur):
     fnr_cur = 1-tpr_cur
     #print(fnr_cur)
     tnr_cur = 1-fpr_cur
+
     return fnr_cur, tnr_cur
+
+
+
