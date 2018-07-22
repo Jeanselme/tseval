@@ -127,8 +127,6 @@ def plot_y_over_time(time, y_score, ts_id, evaluation_path, per_ts_id=False, mod
         ax.set_ylabel('Prediction score', fontsize='medium')
 
 
-        # TODO
-
     elif style_split == True:
         # split the figure into 3 areas with separate axes
         fig, (ax1, ax2, ax3) = plt.subplots(1, 3, sharey=True, gridspec_kw={'width_ratios': [1, 5, 1]})

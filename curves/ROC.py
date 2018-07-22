@@ -53,6 +53,9 @@ def plot_roc(k_th_fold, ts_id, time, y_true, y_score, model_labels, evaluation_p
 
     - clean up
     - confidence bound as default param
+    - if overloaded, do not plot confidence
+    - what to do with default? -> better as external "model" given, not part of plot function itself?
+    - do conf only in the plot function, not in the curve function
 
     Notes
     -----
@@ -67,6 +70,7 @@ def plot_roc(k_th_fold, ts_id, time, y_true, y_score, model_labels, evaluation_p
     - instead of looping with j, make more efficient implementation that computes the curves just once and plots 4 times
     - the variable names tpr and fpr are wrong when computing tnr and fnr (j=3, 4) -> should be corrected for better style
     - cut-off point in log plots as parameter
+
 
     """
     # differentiate whether multiple models or one model is used
@@ -112,6 +116,7 @@ def plot_roc(k_th_fold, ts_id, time, y_true, y_score, model_labels, evaluation_p
 
         cmap_list = ['Blues', 'Oranges', 'Greens', 'Purples', 'Greys']  # Purple
         average_color_list = ['blue', 'orange', 'green', 'purple', 'grey']
+        # TODO use colormap / assert enough colors
 
         #correct --- line (upper triangular)
         random_line_x = np.linspace(0,1,201)
@@ -165,6 +170,7 @@ def plot_roc(k_th_fold, ts_id, time, y_true, y_score, model_labels, evaluation_p
             colors = cmap(np.linspace(0, 1, n_test_rounds))
             fprs, tprs, thresholds_list, aucs, ids = 'ph', [], 'ph', [], []
             # base_fpr_1 = np.linspace(10 ** (-7), 10 ** (-5), 101)
+            # TODO adjust to whatever is the min FPR plotted
             base_fpr_1 = np.linspace(10 ** (-5), 10 ** (-2), 101)
             base_fpr_2 = np.linspace(10 ** (-2), 1, 100)
             base_fpr = np.concatenate((base_fpr_1, base_fpr_2))

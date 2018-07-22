@@ -17,7 +17,7 @@ roc_curve(...) function (compare [1]), since I assumed many people were familiar
 """
 
 
-def amoc_curve(time, y_score, ts_ids, k_fold_label=None):
+def amoc_curve(time, y_score, ts_ids, k_fold_label=None, resolution=500):
     """ Compute Activity Monitoring Operating Characteristic (AMOC) [1]
 
     The Activity Monitoring Operating Characteristic (AMOC) plots "false-alarms", measured in
@@ -67,6 +67,8 @@ def amoc_curve(time, y_score, ts_ids, k_fold_label=None):
     k_fold_label: array, shape = [n_samples], default=None
         The k-th fold the (test) time series corresponds to.
         Allows to compute confidence bounds over the folds.
+    resolution: int, default=500
+        Number of thresholds computed (the higher, the smoother the AMOC, but the longer the computation)
 
     Returns
     -------
@@ -121,6 +123,7 @@ def amoc_curve(time, y_score, ts_ids, k_fold_label=None):
     -------------
 
     - resolution -> change to something else, since could be confused with plot resolution
+    - STD not done as in ROC (not in rounds)! -> correct?
 
     Possible improvements
     ---------------------
@@ -157,8 +160,6 @@ def amoc_curve(time, y_score, ts_ids, k_fold_label=None):
     # fold labels
     unique_folds = np.unique(k_fold_label)
     det_time_folds, FPR_folds = [], []
-    # number of thresholds computed (the higher, the smoother the AMOC, but the longer the computation)
-    resolution = 200
 
     for k, k_fold in enumerate(unique_folds):
         # labels, predictions and ts_ids corresponding to one fold
@@ -289,6 +290,7 @@ def plot_amoc(time_list, y_score_list, ts_id_list, k_fold_label_list, model_labe
             lower_conf = np.maximum(FPR_mean - conf_stds * FPR_std, 0)  # lower bound is 0
             upper_conf = np.minimum(FPR_mean + conf_stds * FPR_std, 1)  # upper bound is 1
             # plot the confidence bounds
+            print("CON BOUND: ", FPR_std)
             plt.fill_between(time_to_detection, lower_conf, upper_conf, color=colors[c], alpha=0.15)
             # find global minimum in plot for y axis in log plot
             lower_conf_plotted = lower_conf[time_to_detection <= xlim_max]
