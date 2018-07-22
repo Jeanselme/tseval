@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from matplotlib.pyplot import text
 import os
 import pandas
 import re
@@ -17,7 +18,7 @@ def plot_y_over_time_per_ts_id():
     :return: None
     """
 
-def plot_y_over_time(time, y_score, ts_id, evaluation_path, per_ts_id=False, model_labels=None, style_split=False, zoom_time_window=(-1, 10), y_true=None, event_time=None, time_unit=None):
+def plot_y_over_time(time, y_score, ts_id, evaluation_path, per_ts_id=False, model_labels=None, style_split=False, zoom_time_window=(-1, 10), y_true=None, events=None, time_unit=None):
     """
     Plot the prediction over time for one model or multiple models.
 
@@ -45,7 +46,8 @@ def plot_y_over_time(time, y_score, ts_id, evaluation_path, per_ts_id=False, mod
     :param zoom_time_window: tuple of 2 time values; if style_split==True, tuple consisting of the left and right bound of the zoomed in window (the second area)
     :param y_true=None (optional); if specified: shape = (n_samples)
                                    The label that shall be predicted.
-    :param event_time=None
+    :param events=None; list of tuples, each tuple consisting of float and string;
+                        time of event (float) with description text (string)
     :param time_unit=None: string; the unit of the time axis.
     :return: None (figure saved)
 
@@ -60,6 +62,8 @@ def plot_y_over_time(time, y_score, ts_id, evaluation_path, per_ts_id=False, mod
     1) make new plot style (also other things to plot potentially, such as lab draws etc.)
     2) use this very same style
 
+    # TODO y_true after prediction computation
+
     Author
     ------
 
@@ -72,7 +76,6 @@ def plot_y_over_time(time, y_score, ts_id, evaluation_path, per_ts_id=False, mod
         -> explain t split also in docs
     - opfion to plot moving average instead of "plain" average
     - option whether to plot confidence bounds or not
-
 
     """
     # TODO rework when list provided
@@ -94,14 +97,24 @@ def plot_y_over_time(time, y_score, ts_id, evaluation_path, per_ts_id=False, mod
     if model_labels != None:
         assert len(model_labels) == len(time), "Not enough model labels provided."
 
-    # TODO y_true after prediction computation
-    # TODO time of event
-    # TODO time_units
-
     # colors for each model
     # TODO use colormap for infinite amount of models
     colors = ['b', 'g', 'orange', 'c', 'm', 'k']
     assert(len(time) <= len(colors))
+
+    # find the minimum and maximum time plotted by any model
+    min_time = float("inf")
+    max_time = float("-inf")
+    for time_model in time:
+        min_time = min(time_model.min(), min_time)
+        max_time = max(time_model.max(), max_time)
+    # find the minimum and maximum y value plotted by any model
+    min_y = float("inf")
+    max_y = float("-inf")
+    for y_score_model in y_score:
+        min_y = min(y_score_model.min(), min_y)
+        max_y = max(y_score_model.max(), max_y)
+        # TODO also loop through y_true, as soon as available
 
     # prepare the plot
     if style_split == False:
@@ -120,13 +133,6 @@ def plot_y_over_time(time, y_score, ts_id, evaluation_path, per_ts_id=False, mod
     elif style_split == True:
         # split the figure into 3 areas with separate axes
         fig, (ax1, ax2, ax3) = plt.subplots(1, 3, sharey=True, gridspec_kw={'width_ratios': [1, 5, 1]})
-
-        # find the minimum and maximum time plotted by any model
-        min_time = float("inf")
-        max_time = float("-inf")
-        for time_model in time:
-            min_time = min(time_model.min(), min_time)
-            max_time = max(time_model.max(), max_time)
 
         # arrange the axes of the 3 areas accordingly
         ax1.set_xlim(min_time, zoom_time_window[0])
@@ -193,10 +199,15 @@ def plot_y_over_time(time, y_score, ts_id, evaluation_path, per_ts_id=False, mod
 
         # plots per time series ID
         if per_ts_id:
-            for
+            pass  # TODO
 
-        # plot legend in case model labels are provided
-    if model_labels != None:
+    if events != None:
+        for event_time, event_descr in events:
+            plt.vlines(x=event_time, ymin=min_y, ymax=max_y, color='r', label=event_descr)
+            # text(event_time, max_y/2, event_descr, rotation=90, verticalalignment='center')
+
+    # plot legend in case model labels or at least one event is provided
+    if model_labels != None or events != None:
         if style_split == False:
             ax.legend(loc='lower right', prop={'size': 9})  # TODO lower right?
         elif style_split == True:
