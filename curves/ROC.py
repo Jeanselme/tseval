@@ -52,6 +52,7 @@ def plot_roc(k_th_fold, ts_id, time, y_true, y_score, model_labels, evaluation_p
     ---------
 
     - clean up
+    - confidence bound as default param
 
     Notes
     -----
@@ -255,7 +256,7 @@ def plot_roc(k_th_fold, ts_id, time, y_true, y_score, model_labels, evaluation_p
             ax.set_xscale('log')  # log-scale
         if j == 3:
             name = '_FNR-TNR_u-u'
-            plt.xlabel('False Nositive Rate', fontsize='medium')
+            plt.xlabel('False Negative Rate', fontsize='medium')
         if j == 4:
             name = '_FNR-TNR_log-u'
             plt.xlabel('False Negative Rate (log scale)', fontsize='medium')

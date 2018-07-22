@@ -117,6 +117,16 @@ def amoc_curve(time, y_score, ts_ids, k_fold_label=None):
 
     Fabian Falck
 
+    TODO for v0.1
+    -------------
+
+    - resolution -> change to something else, since could be confused with plot resolution
+
+    Possible improvements
+    ---------------------
+
+    - ts_ids -> ts_id BE CAREFUL: test_id also used for for-loop
+
     """
 
     # preliminary checks of inputs
@@ -232,7 +242,7 @@ def amoc_curve(time, y_score, ts_ids, k_fold_label=None):
     return time_to_detection, FPR_mean, FPR_std, thresholds
 
 
-def plot_amoc(time_list, y_score_list, ts_id_list, k_fold_label_list, model_labels, evaluation_path, conf_stds=1.0, time_unit='Minutes', xlim_max=5):
+def plot_amoc(time_list, y_score_list, ts_id_list, k_fold_label_list, model_labels, evaluation_path, conf_stds=1.0, time_unit=None, xlim_max=5):
     """
     Example of how to use the amoc_curve() function with multiple test sets to compare.
 
@@ -244,6 +254,7 @@ def plot_amoc(time_list, y_score_list, ts_id_list, k_fold_label_list, model_labe
     :param evaluation_path: a string of the path where to save the AMOC figures to.
     :param conf_stds: controlling how thick the confidence bounds are in temrs of multiples of the standard deviation.
             Default: 1 standard deviation
+    :param time_unit=None: string; the unit of the time axis (as displayed at the axis label)
     :param xlim_max: upper limit of the x-axis (horizontal axis)
 
     Possible improvements
@@ -284,7 +295,11 @@ def plot_amoc(time_list, y_score_list, ts_id_list, k_fold_label_list, model_labe
             global_min = min(lower_conf_plotted.min(), global_min)
         # cosmetics
         plt.title('Activity Monitoring Operating Characteristic (AMOC)')
-        plt.xlabel('Time to detection [' + time_unit + ']', fontsize='large')
+        if time_unit != None:
+            x_label = 'Time to detection [' + time_unit + ']'
+        else:
+            x_label = 'Time to detection'
+        plt.xlabel(x_label, fontsize='large')
         plt.xlim(xmin=0, xmax=xlim_max)
         plt.legend(loc='upper right', prop={'size': 9})
 

@@ -38,6 +38,20 @@ Contribution
 ------------
 
 Any contributions to this library, in particular from domains other than the medical domain, or suggestions on the existing code are very welcome!
+Your contribution will be acknowledged.
+
+Contributers
+------------
+
+The following people have actively developed the initial version of this library:
+
+* Fabian Falck @ FabianFalck
+
+The following people have contributed to the initial version of this library in terms of code, ideas and content:
+
+* Vincent Jeanselme (Carnegie Mellon University)
+* Peter Gyring (University of Oxford)
+* Mauro Santos (University of Oxford)
 
 
 Citation
@@ -59,3 +73,7 @@ TODO
 - scaler metrics: usage example
 
 - in general: make for anything in the library a usage example
+- no warranty clause in README
+
+
+- for all functions: savefig or show option
