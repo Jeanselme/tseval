@@ -98,9 +98,8 @@ def plot_y_over_time(time, y_score, ts_id, evaluation_path, per_ts_id=False, mod
         assert len(model_labels) == len(time), "Not enough model labels provided."
 
     # colors for each model
-    # TODO use colormap for infinite amount of models
-    colors = ['b', 'g', 'orange', 'c', 'm', 'k']
-    assert(len(time) <= len(colors))
+    cmap = plt.get_cmap('jet')
+    colors = cmap(np.linspace(0, 1, len(time)))
 
     # find the minimum and maximum time plotted by any model
     min_time = float("inf")
