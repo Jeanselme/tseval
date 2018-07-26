@@ -56,6 +56,7 @@ def plot_roc(k_th_fold, ts_id, time, y_true, y_score, model_labels, evaluation_p
     - if overloaded, do not plot confidence
     - what to do with default? -> better as external "model" given, not part of plot function itself?
     - do conf only in the plot function, not in the curve function
+    - in all plots: assert that y_pred between 0 and 1
 
     Notes
     -----

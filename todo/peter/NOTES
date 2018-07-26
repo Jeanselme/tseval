@@ -1,0 +1,10 @@
+Notes:
+
+1) on paper sheet when discussing with Peter
+
+2) from his e-mail:
+Attached the four .py files. I've changed gconf->codes in tew_tools.py.
+Don't forget to perhaps also alter n_aim = 10 (line 49 in tew_tools.py), since that is probably a rather low number of thresholds (n_aim is the number of thresholds that I subsample to).
+The image attached is the random median TEW curve, i.e. the output of TEW_illustration.py.
+Have fun :)
+Pete

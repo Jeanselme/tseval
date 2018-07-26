@@ -74,6 +74,7 @@ TODO
 
 - in general: make for anything in the library a usage example
 - no warranty clause in README
+= provide an 1) default and a 2) random prediction curve
 
 
 - for all functions: savefig or show option

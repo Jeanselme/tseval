@@ -282,10 +282,11 @@ def plot_amoc(time_list, y_score_list, ts_id_list, k_fold_label_list, model_labe
     :param time_unit=None: string; the unit of the time axis (as displayed at the axis label)
     :param xlim_max: upper limit of the x-axis (horizontal axis)
 
-    Possible improvements
+    TODO for v0.1
     ---------------------
 
     - in the log plot, cut off at 10^-3 FPR and time axis accordingly
+    - cut-off as default parameter
 
     """
 

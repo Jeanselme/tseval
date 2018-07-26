@@ -115,60 +115,63 @@ def plot_y_over_time(time, y_score, ts_id, evaluation_path, per_ts_id=False, mod
         max_y = max(y_score_model.max(), max_y)
         # TODO also loop through y_true, as soon as available
 
-    # prepare the plot
-    if style_split == False:
-        fig, ax = plt.subplots(1, 1)
-
-        if time_unit != None:
-            x_label = 'Time [' + time_unit + ']'
-        else:
-            x_label = 'Time'
-        ax.set_xlabel(x_label, fontsize='medium')
-        ax.set_ylabel('Prediction score', fontsize='medium')
-
-
-    elif style_split == True:
-        # split the figure into 3 areas with separate axes
-        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, sharey=True, gridspec_kw={'width_ratios': [1, 5, 1]})
-
-        # arrange the axes of the 3 areas accordingly
-        ax1.set_xlim(min_time, zoom_time_window[0])
-        ax2.set_xlim(zoom_time_window[0], zoom_time_window[1])
-        ax3.set_xlim(zoom_time_window[1], max_time)
-        # ax2.spines['left'].set_visible(False)
-        ax1.yaxis.tick_left()
-        ax1.xaxis.set_ticks(np.linspace(min_time, zoom_time_window[0], 2))
-        ax3.xaxis.set_ticks(np.linspace(zoom_time_window[1], max_time, 2))
-
-        # TODO does what?
-        ax3.yaxis.tick_right()
-        d = .015
-
-        kwargs = dict(transform=ax1.transAxes, color='k', clip_on=False)
-        ax1.plot((1 - d, 1 + d), (-d, +d), **kwargs)
-        ax1.plot((1 - d, 1 + d), (1 - d, 1 + d), **kwargs)
-
-        kwargs.update(transform=ax2.transAxes)  # switch to the bottom axes
-        ax2.plot((-d, +d), (1 - d, 1 + d), **kwargs)
-        ax2.plot((-d, +d), (-d, +d), **kwargs)
-
-        kwargs.update(transform=ax3.transAxes)  # switch to the bottom axes
-        ax3.plot((-d, +d), (1 - d, 1 + d), **kwargs)
-        ax3.plot((-d, +d), (-d, +d), **kwargs)
-
-        if time_unit != None:
-            x_label = 'Time [' + time_unit + ']'
-        else:
-            x_label = 'Time'
-
-        ax2.set_xlabel(x_label, fontsize='medium')
-        ax1.set_ylabel('Prediction score', fontsize='medium')
-
 
     # data of one model adn plotting
     for m, (time_model, y_score_model, ts_id_model) in enumerate(zip(time, y_score, ts_id)):
         interp_time, y_score_mean, y_score_conf, unique_ts_ids, raw_time_list, \
         raw_y_score_list = y_over_time_curve(time_model, y_score_model, ts_id_model, conf_stds=1.0, resolution=3000)
+
+        # TODO correct to also make per pig plots
+
+        # prepare the plot
+        if m == 0 and style_split == False:
+            fig, ax = plt.subplots(1, 1)
+
+            if time_unit != None:
+                x_label = 'Time [' + time_unit + ']'
+            else:
+                x_label = 'Time'
+            ax.set_xlabel(x_label, fontsize='medium')
+            ax.set_ylabel('Prediction score', fontsize='medium')
+
+
+        elif m == 0 and style_split == True:
+            # split the figure into 3 areas with separate axes
+            fig, (ax1, ax2, ax3) = plt.subplots(1, 3, sharey=True, gridspec_kw={'width_ratios': [1, 5, 1]})
+
+            # arrange the axes of the 3 areas accordingly
+            ax1.set_xlim(min_time, zoom_time_window[0])
+            ax2.set_xlim(zoom_time_window[0], zoom_time_window[1])
+            ax3.set_xlim(zoom_time_window[1], max_time)
+            # ax2.spines['left'].set_visible(False)
+            ax1.yaxis.tick_left()
+            ax1.xaxis.set_ticks(np.linspace(min_time, zoom_time_window[0], 2))
+            ax3.xaxis.set_ticks(np.linspace(zoom_time_window[1], max_time, 2))
+
+            # TODO does what?
+            ax3.yaxis.tick_right()
+            d = .015
+
+            kwargs = dict(transform=ax1.transAxes, color='k', clip_on=False)
+            ax1.plot((1 - d, 1 + d), (-d, +d), **kwargs)
+            ax1.plot((1 - d, 1 + d), (1 - d, 1 + d), **kwargs)
+
+            kwargs.update(transform=ax2.transAxes)  # switch to the bottom axes
+            ax2.plot((-d, +d), (1 - d, 1 + d), **kwargs)
+            ax2.plot((-d, +d), (-d, +d), **kwargs)
+
+            kwargs.update(transform=ax3.transAxes)  # switch to the bottom axes
+            ax3.plot((-d, +d), (1 - d, 1 + d), **kwargs)
+            ax3.plot((-d, +d), (-d, +d), **kwargs)
+
+            if time_unit != None:
+                x_label = 'Time [' + time_unit + ']'
+            else:
+                x_label = 'Time'
+
+            ax2.set_xlabel(x_label, fontsize='medium')
+            ax1.set_ylabel('Prediction score', fontsize='medium')
+
 
         # the upper and lower confidence bound
         y_pred_upper = np.minimum(y_score_mean + y_score_conf, 1)
