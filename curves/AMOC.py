@@ -306,7 +306,7 @@ def plot_amoc(time_list, y_score_list, ts_id_list, k_fold_label_list, model_labe
     for plot_nr in range(3):  # plot both unit-unit and unit-log version
         fig = plt.figure(figsize=(8.0, 5.0))
         ax = fig.add_subplot(111)
-        colors = ['blue', 'orange', 'green', 'purple', 'grey']
+        colors = ['blue', 'green', 'purple', 'grey', 'orange']
         # minimum of the average curve
         global_min = 1.0
         for c in range(number_of_curves):

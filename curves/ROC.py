@@ -115,8 +115,8 @@ def plot_roc(k_th_fold, ts_id, time, y_true, y_score, model_labels, evaluation_p
             plt.ylabel('True Negative Rate', fontsize='medium')
         plt.title('Receiver Operating Characteristic (ROC)')
 
-        cmap_list = ['Blues', 'Oranges', 'Greens', 'Purples', 'Greys']  # Purple
-        average_color_list = ['blue', 'orange', 'green', 'purple', 'grey']
+        cmap_list = ['Blues', 'Greens', 'Purples', 'Greys', 'Oranges']  # Purple
+        average_color_list = ['blue', 'green', 'purple', 'grey', 'orange']
         # TODO use colormap / assert enough colors
 
         #correct --- line (upper triangular)
