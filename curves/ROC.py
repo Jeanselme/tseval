@@ -17,7 +17,7 @@ import numpy as np
 
 
 
-def plot_roc(k_th_fold, ts_id, time, y_true, y_score, model_labels, evaluation_path, n_test_rounds=3, default=False):
+def plot_roc(k_th_fold, ts_id, time, y_true, y_score, model_labels, evaluation_path, n_test_rounds=3, default=False, cut_off_point=1e-3):
     """
     Plotting an ROC for time series data.
 
@@ -70,7 +70,6 @@ def plot_roc(k_th_fold, ts_id, time, y_true, y_score, model_labels, evaluation_p
     - input checks for the funciton parameters
     - instead of looping with j, make more efficient implementation that computes the curves just once and plots 4 times
     - the variable names tpr and fpr are wrong when computing tnr and fnr (j=3, 4) -> should be corrected for better style
-    - cut-off point in log plots as parameter
 
 
     """
@@ -272,7 +271,7 @@ def plot_roc(k_th_fold, ts_id, time, y_true, y_score, model_labels, evaluation_p
         # cut off ROC on the left side, currently arbitrarily at 1e-3
         if j == 2 or j == 4:
             # left cut-off point is at 1/N, where N is the number of observations
-            cut_off_point =  1e-3  # base_fpr[20]  # fpr_cur[int(fpr_cur.shape[0]*0.02)] # 2% quantile arbitrarily chosen, since before that often flat line
+            cut_off_point =  cut_off_point  # base_fpr[20]  # fpr_cur[int(fpr_cur.shape[0]*0.02)] # 2% quantile arbitrarily chosen, since before that often flat line
             print("cut-off point (xlim left): " + str(cut_off_point))
             # print("cut-off point = " + str(cut_off_point))  # 1/number of observations
             plt.xlim(cut_off_point, 1.0)
