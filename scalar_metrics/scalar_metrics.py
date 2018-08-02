@@ -1,3 +1,6 @@
+import sys
+sys.path.append("/local/engs1954/Documents/TimeSeriesEvaluation")
+
 import numpy
 # classification
 from sklearn.metrics import accuracy_score, log_loss, roc_auc_score
@@ -81,55 +84,60 @@ def classification_rate_at_fixed(y_true, y_score, positive, true_fixed, fixed_ra
                 - true_fixed = False
                 - fixed_rate = 1e-3
     :return: calc_at_fixed_rate: The calculated rate of interest at a certain fixed rate.
+
+    TOOD for v0.1
+    -------------
+
+    - issue: TPR@FPR=0.01 is 0.01, even though only two values -> assert statements that guarantee that the fixed rate entered even makes sense with the (little) data given!
+
     """
-    # y_true and y_score are either both numpy arrays or both lists
-    assert( ( type(y_true) == type(np.array([0.0])) and type(y_score) == type(np.array([0.0])) ) or ( type(y_true) == type([]) and type(y_score) == type([]) ) )
-    # if just numpy array given, convert to list for consistent processing
-    if type(y_true) == type(np.array([0.0])):
-        y_true = [y_true]
-        y_score = [y_score]
 
-    for y_true, y_score in zip(y_true, y_score):
-        fr_cur, tr_cur, thresholds_cur = sklearn.metrics.roc_curve(y_true, y_score)
-        fr_cur, tr_cur, thresholds_cur = np.array(fr_cur), np.array(tr_cur), np.array(thresholds_cur)
-        # true and false negatives; otherwise: true and false positives
-        if positive == False:
-            # compute negatives
-            fr_cur, tr_cur = convert_to_fnr_tnr(fr_cur, tr_cur)  # fr=false rate, tr=true rate
-            # reverse the order of the elements
-            fr_cur, tr_cur = np.flip(fr_cur, axis=0), np.flip(tr_cur, axis=0)
-        # convert to list
-        fr_cur, tr_cur = fr_cur.ravel().tolist(), tr_cur.ravel().tolist()
-        # make a joint list
-        fr_tr_list = [(fr, tr) for (fr, tr) in zip(fr_cur, tr_cur)]
-        # sort the lists together and then split the tuples up again
-        # changed in comparison to initial implementation
-        fr_cur, tr_cur = [x[0] for x in sorted(fr_tr_list, key=lambda z: z[0])], [x[1] for x in sorted(fr_tr_list, key=lambda z: z[0])]
 
-        # select the curve that is fixed
-        if true_fixed:
-            fixed_cur = tr_cur
-        else:
-            fixed_cur = fr_cur
-        # select the curve that is of interest
-        if true_fixed:
-            calc_cur = fr_cur
-        else:
-            calc_cur = tr_cur
 
-        # fpr@tpr=0.5
-        for i, fixed_val in enumerate(fixed_cur):
-            if fixed_val > fixed_rate:
-                try:
-                    # the fraction that must be surpassed
-                    fract_to = (fixed_rate - fixed_cur[i - 1]) / (fixed_cur[i] - fixed_cur[i - 1])
-                except:
-                    # TODO is this the right handling, if division by zero?
-                    fract_to = 0.0
-                calc_at_fixed_rate = calc_cur[i - 1] + fract_to * (calc_cur[i] - calc_cur[i - 1])
-                break
+    fr_cur, tr_cur, thresholds_cur = sklearn.metrics.roc_curve(y_true, y_score)
+    fr_cur, tr_cur, thresholds_cur = np.array(fr_cur), np.array(tr_cur), np.array(thresholds_cur)
+    # true and false negatives; otherwise: true and false positives
+    if positive == False:
+        # compute negatives
+        fr_cur, tr_cur = convert_to_fnr_tnr(fr_cur, tr_cur)  # fr=false rate, tr=true rate
+        # reverse the order of the elements
+        fr_cur, tr_cur = np.flip(fr_cur, axis=0), np.flip(tr_cur, axis=0)
+    # convert to list
+    fr_cur, tr_cur = fr_cur.ravel().tolist(), tr_cur.ravel().tolist()
+    # make a joint list
+    fr_tr_list = [(fr, tr) for (fr, tr) in zip(fr_cur, tr_cur)]
+    # sort the lists together and then split the tuples up again
+    # changed in comparison to initial implementation
+    fr_cur, tr_cur = [x[0] for x in sorted(fr_tr_list, key=lambda z: z[0])], [x[1] for x in sorted(fr_tr_list, key=lambda z: z[0])]
 
-        return calc_at_fixed_rate
+    # select the curve that is fixed
+    if true_fixed:
+        fixed_cur = tr_cur
+    else:
+        fixed_cur = fr_cur
+    # select the curve that is of interest
+    if true_fixed:
+        calc_cur = fr_cur
+    else:
+        calc_cur = tr_cur
+
+    # calculating the rate
+    calc_at_fixed_rate = -1
+    for i, fixed_val in enumerate(fixed_cur):
+        if fixed_val > fixed_rate:
+            try:
+                # the fraction that must be surpassed
+                fract_to = (fixed_rate - fixed_cur[i - 1]) / (fixed_cur[i] - fixed_cur[i - 1])
+            except:
+                # TODO is this the right handling, if division by zero?
+                fract_to = 0.0
+            calc_at_fixed_rate = calc_cur[i - 1] + fract_to * (calc_cur[i] - calc_cur[i - 1])
+            break
+    # if the for loop does not break: the rate must be 100%
+    if calc_at_fixed_rate == -1:
+        calc_at_fixed_rate = 1.0
+
+    return calc_at_fixed_rate
 
 
 def cross_entropy(y_true, y_score):
@@ -329,12 +337,12 @@ def make_latex_table(scalar_metrics, threshold):
 
     # make 2D list for every section
     body_list = []
-    body_list.append(['Accuracy (at $\Theta = ' + str(threshold), str(scalar_metrics['acc']) + ' (default: ' + str(scalar_metrics['def_acc']) + ')' ])
-    body_list.append(['UAR (at $\Theta = ' + str(threshold), str(scalar_metrics['uar']) + ' (default: ' + str(scalar_metrics['def_uar']) + ')' ])
-    body_list.append(['True positives (at $\Theta = ' + str(threshold), str(scalar_metrics['tp']) + ' (default: ' + str(scalar_metrics['def_tp']) + ')' ])
-    body_list.append(['False positives (at $\Theta = ' + str(threshold), str(scalar_metrics['fp']) + ' (default: ' + str(scalar_metrics['def_fp']) + ')' ])
-    body_list.append(['True negatives (at $\Theta = ' + str(threshold), str(scalar_metrics['tn']) + ' (default: ' + str(scalar_metrics['def_tn']) + ')' ])
-    body_list.append(['False negatives (at $\Theta = ' + str(threshold), str(scalar_metrics['fn']) + ' (default: ' + str(scalar_metrics['def_fn']) + ')' ])
+    body_list.append(['Accuracy (at $\Theta = ' + str(threshold) + ')' , str(scalar_metrics['acc']) + ' (default: ' + str(scalar_metrics['def_acc']) + ')' ])
+    body_list.append(['UAR (at $\Theta = ' + str(threshold) + ')', str(scalar_metrics['uar'])+ ' (default: ' + str(scalar_metrics['def_uar']) + ')' ])
+    body_list.append(['True positives (at $\Theta = ' + str(threshold) + ')', str(scalar_metrics['tp']) + ' (default: ' + str(scalar_metrics['def_tp']) + ')' ])
+    body_list.append(['False positives (at $\Theta = ' + str(threshold) + ')', str(scalar_metrics['fp']) + ' (default: ' + str(scalar_metrics['def_fp']) + ')' ])
+    body_list.append(['True negatives (at $\Theta = ' + str(threshold) + ')', str(scalar_metrics['tn']) + ' (default: ' + str(scalar_metrics['def_tn']) + ')' ])
+    body_list.append(['False negatives (at $\Theta = ' + str(threshold) + ')', str(scalar_metrics['fn']) + ' (default: ' + str(scalar_metrics['def_fn']) + ')' ])
     latex += array_as_latex_table(body_list)
 
     # make 2D list for every section
@@ -394,10 +402,10 @@ def add_default_values(y_true, y_score, threshold, scalar_metrics):
         if tmp_count > max_count:
             max_label = label
     # make the default prediction
-    y_default = np.repeat(label, repeats=y_score.shape[0])
+    y_default = np.repeat(max_label, repeats=y_score.shape[0])
 
     # compute the scalar metrics
-    scalar_metrics_default = compute_scalar_metrics(y_true, y_score, threshold)
+    scalar_metrics_default = compute_scalar_metrics(y_true, y_default, threshold)
 
     # add the default metrics to the original dictionary
     scalar_metrics_new = scalar_metrics.copy()  # copy required, since adding items on the fly not allowed
@@ -405,6 +413,22 @@ def add_default_values(y_true, y_score, threshold, scalar_metrics):
         scalar_metrics_new['def_' + key] = scalar_metrics_default[key]
 
     return scalar_metrics_new
+
+
+if __name__ == "__main__":
+
+    # making a toy example
+    y_true = np.array([1.0, 0.0])
+    y_score = np.array([1.0, 1.0])
+    threshold = 0.5
+
+    scalar_metrics = compute_scalar_metrics(y_true, y_score, threshold)
+    scalar_metrics = add_default_values(y_true, y_score, threshold, scalar_metrics)
+
+    latex = make_latex_table(scalar_metrics, threshold)
+
+    print(latex)
+
 
 
 
