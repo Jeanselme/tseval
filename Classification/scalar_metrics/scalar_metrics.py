@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score, log_loss, roc_auc_score
 from sklearn.metrics import explained_variance_score, mean_absolute_error, mean_squared_error, median_absolute_error, r2_score
 import pickle
 import os
-from tseval.curves.ROC import convert_to_fnr_tnr
+from tseval.Classification.curves.ROC import convert_to_fnr_tnr
 import numpy as np
 import sklearn
 from sklearn.metrics import roc_auc_score

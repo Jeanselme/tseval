@@ -78,3 +78,7 @@ TODO
 
 
 - for all functions: savefig or show option
+
+- scalar metrics for regression
+
+- plots for regression tasks
