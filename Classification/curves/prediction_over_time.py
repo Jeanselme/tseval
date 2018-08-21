@@ -7,16 +7,16 @@ import os
 import pandas
 import re
 
-def plot_y_over_time_per_ts_id():
-    """
-    Plot the prediction over time for one model or multiple models.
-
-
-
-    TODO PARAMS
-
-    :return: None
-    """
+# def plot_y_over_time_per_ts_id():
+#     """
+#     Plot the prediction over time for one model or multiple models.
+#
+#
+#
+#     TODO PARAMS
+#
+#     :return: None
+#     """
 
 def plot_y_over_time(time, y_score, ts_id, evaluation_path, model_labels=None, style_split=False, zoom_time_window=(-1, 10), y_true=None, events=None, time_unit=None):
     """
@@ -65,6 +65,8 @@ def plot_y_over_time(time, y_score, ts_id, evaluation_path, model_labels=None, s
     2) use this very same style
 
     # TODO y_true after prediction computation
+
+    - should be put outside classification or regression -> own category
 
     Author
     ------
@@ -423,14 +425,14 @@ def plot_y_over_time_per_ts_id(time, y_score, ts_id, evaluation_path, model_labe
                 elif style_split == True:
                     ax2.legend(loc='lower right', prop={'size': 9})  # TODO lower right?
 
-            title = "Prediction score over time - per time series - ID = " + ts_id
+            title = "Prediction score over time - per time series - ID = " + str(ts_id)
             if style_split == False:
                 plt.title(title)
             else:
                 ax2.set_title(title)
             plt.ylim(0.0, 1.0)
 
-            save_path = os.path.join(folder_path, 'y_pred_over_time_id_' + ts_id + '.pdf')
+            save_path = os.path.join(folder_path, 'y_pred_over_time_id_' + str(ts_id) + '.pdf')
             plt.savefig(save_path, format='pdf', dpi=2000)
 
 
