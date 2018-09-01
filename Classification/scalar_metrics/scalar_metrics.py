@@ -298,8 +298,9 @@ def roc_auc_score_new(y_true, y_score, average="macro", sample_weight=None,
     >>> roc_auc_score(y_true, y_scores)
     0.75
     """
+    # imports which are usually at the top of the file in sklearn
     from sklearn.utils.multiclass import type_of_target
-    from sklearn.metrics.ranking import roc_curve, _average_binary_score
+    from sklearn.metrics.ranking import roc_curve, _average_binary_score, auc
     from sklearn.preprocessing import label_binarize
 
     def _binary_roc_auc_score(y_true, y_score, sample_weight=None):
@@ -378,7 +379,7 @@ def compute_scalar_metrics(y_true, y_score, threshold=0.5):
     scalar_metrics['acc'] = accuracy(y_true, y_pred)
     scalar_metrics['cross_entropy'] = cross_entropy(y_true, y_score)
     scalar_metrics['auc'] = AUC(y_true, y_score)
-    scalar_metrics['auc_partial_0.3'] = roc_auc_score_new(y_true, y_score, max_fpr=0.3)
+    scalar_metrics['auc_max_fpr_0.2'] = roc_auc_score_new(y_true, y_score, max_fpr=0.2)
     scalar_metrics['uar'] = UAR(y_true, y_pred)
 
     TP, FP, TN, FN = true_false_positives_negatives(y_true, y_pred)
@@ -456,6 +457,7 @@ def make_latex_table(scalar_metrics, threshold):
     body_list = []
     body_list.append(['Cross entropy (binary classification)', str(scalar_metrics['cross_entropy']) + ' (default: ' + str(scalar_metrics['def_cross_entropy']) + ')' ])
     body_list.append(['Area under ROC curve', str(scalar_metrics['auc']) + ' (default: ' + str(scalar_metrics['def_auc']) + ')' ])
+    body_list.append(['Area under ROC curve to max. FPR = 0.2', str(scalar_metrics['auc_max_fpr_0.2']) + ' (default: ' + str(scalar_metrics['def_auc_max_fpr_0.2']) + ')'])
 
     latex += array_as_latex_table(body_list)
 
