@@ -45,7 +45,7 @@ Contributers
 
 The following people have actively developed the initial version of this library:
 
-* Fabian Falck @ FabianFalck
+* Fabian Falck (Imperial College London)
 
 The following people have contributed to the initial version of this library in terms of code, ideas and content:
 
