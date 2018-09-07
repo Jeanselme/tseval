@@ -380,6 +380,7 @@ def compute_scalar_metrics(y_true, y_score, threshold=0.5):
     scalar_metrics['cross_entropy'] = cross_entropy(y_true, y_score)
     scalar_metrics['auc'] = AUC(y_true, y_score)
     scalar_metrics['auc_max_fpr_0.2'] = roc_auc_score_new(y_true, y_score, max_fpr=0.2)
+    scalar_metrics['auc_max_fpr_0.3'] = roc_auc_score_new(y_true, y_score, max_fpr=0.3)
     scalar_metrics['uar'] = UAR(y_true, y_pred)
 
     TP, FP, TN, FN = true_false_positives_negatives(y_true, y_pred)
@@ -393,6 +394,9 @@ def compute_scalar_metrics(y_true, y_score, threshold=0.5):
     scalar_metrics['tnr@fnr=0.01'] = classification_rate_at_fixed(y_true, y_score, positive=False, true_fixed=False, fixed_rate=0.01)
     scalar_metrics['fpr@tpr=0.5'] = classification_rate_at_fixed(y_true, y_score, positive=True, true_fixed=True, fixed_rate=0.5)
     scalar_metrics['fnr@tnr=0.5'] = classification_rate_at_fixed(y_true, y_score, positive=False, true_fixed=True, fixed_rate=0.5)
+
+    scalar_metrics['tpr@fpr=0.2'] = classification_rate_at_fixed(y_true, y_score, positive=True, true_fixed=False, fixed_rate=0.2)
+    scalar_metrics['tpr@fpr=0.3'] = classification_rate_at_fixed(y_true, y_score, positive=True, true_fixed=False, fixed_rate=0.3)
 
     return scalar_metrics
 
@@ -439,8 +443,12 @@ def make_latex_table(scalar_metrics, threshold):
     body_list.append(['TPR @ FPR=0.01', str(scalar_metrics['tpr@fpr=0.01']) + ' (default: ' + str(scalar_metrics['def_tpr@fpr=0.01']) + ')'])
     body_list.append(['TPR @ FPR=0.001', str(scalar_metrics['tpr@fpr=0.001']) + ' (default: ' + str(scalar_metrics['def_tpr@fpr=0.001']) + ')' ])
     body_list.append(['TNR @ FNR=0.01', str(scalar_metrics['tnr@fnr=0.01']) + ' (default: ' + str(scalar_metrics['def_tnr@fnr=0.01']) + ')' ])
-    body_list.append(['FPR @ TPR=0.5', str(scalar_metrics['fpr@tpr=0.5']) + ' (default: ' + str(scalar_metrics['def_fpr@tpr=0.5']) + ')' ])
-    body_list.append(['FNR @ TNR=0.5', str(scalar_metrics['fnr@tnr=0.5']) + ' (default: ' + str(scalar_metrics['def_fnr@tnr=0.5']) + ')' ])
+
+    body_list.append(['FPR @ TPR=0.5', str(scalar_metrics['fpr@tpr=0.5']) + ' (default: ' + str(scalar_metrics['def_fpr@tpr=0.5']) + ')'])
+    body_list.append(['FNR @ TNR=0.5', str(scalar_metrics['fnr@tnr=0.5']) + ' (default: ' + str(scalar_metrics['def_fnr@tnr=0.5']) + ')'])
+    body_list.append(['TPR @ FPR=0.2', str(scalar_metrics['tpr@fpr=0.2']) + ' (default: ' + str(scalar_metrics['def_tpr@fpr=0.2']) + ')'])
+    body_list.append(['TPR @ FPR=0.3', str(scalar_metrics['tpr@fpr=0.3']) + ' (default: ' + str(scalar_metrics['def_tpr@fpr=0.3']) + ')'])
+
     latex += array_as_latex_table(body_list)
 
     # make 2D list for every section
@@ -458,6 +466,7 @@ def make_latex_table(scalar_metrics, threshold):
     body_list.append(['Cross entropy (binary classification)', str(scalar_metrics['cross_entropy']) + ' (default: ' + str(scalar_metrics['def_cross_entropy']) + ')' ])
     body_list.append(['Area under ROC curve', str(scalar_metrics['auc']) + ' (default: ' + str(scalar_metrics['def_auc']) + ')' ])
     body_list.append(['Area under ROC curve to max. FPR = 0.2', str(scalar_metrics['auc_max_fpr_0.2']) + ' (default: ' + str(scalar_metrics['def_auc_max_fpr_0.2']) + ')'])
+    body_list.append(['Area under ROC curve to max. FPR = 0.3', str(scalar_metrics['auc_max_fpr_0.3']) + ' (default: ' + str(scalar_metrics['def_auc_max_fpr_0.3']) + ')'])
 
     latex += array_as_latex_table(body_list)
 
