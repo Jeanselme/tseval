@@ -12,6 +12,7 @@ from tseval.Classification.curves.ROC import convert_to_fnr_tnr
 import numpy as np
 import sklearn
 from sklearn.metrics import roc_auc_score
+import math
 
 
 """
@@ -27,6 +28,40 @@ TODO:
     - TPR, FPR, TNR, FNR for given threshold
 
 """
+
+
+def classification_rate_at_fixed_std(y_true, y_score, positive, true_fixed, fixed_rate):
+    """
+    Splitting all y_true and y_score and n_parts=5 parts, for each computing the rate and then computing its standard deviation.
+
+    :param y_true:
+    :param y_score:
+    :param positive:
+    :param true_fixed:
+    :param fixed_rate:
+    :return:
+    """
+    # number of parts
+    n_parts = 5
+
+    # one part lenght
+    part_length = math.floor(y_true.shape[0] / n_parts)
+    # split y_true into 5 parts (compute beginning and end index)
+    beg_end_indices = []
+    for i in range(n_parts):
+        beg_end_indices.append([i*part_length, (i+1)*part_length])
+
+    # compute the rates
+    rates = []
+    for (beg, end) in beg_end_indices:
+        rate = classification_rate_at_fixed(y_true[beg:end], y_score[beg:end], positive, true_fixed, fixed_rate)
+        rates.append(rate)
+
+    # compute the standard deviation of the rates
+    rates = np.array(rates)
+    rate_std = rates.std()
+
+    return rate_std
 
 
 
@@ -381,6 +416,8 @@ def compute_scalar_metrics(y_true, y_score, threshold=0.5):
     scalar_metrics['auc'] = AUC(y_true, y_score)
     scalar_metrics['auc_max_fpr_0.2'] = roc_auc_score_new(y_true, y_score, max_fpr=0.2)
     scalar_metrics['auc_max_fpr_0.3'] = roc_auc_score_new(y_true, y_score, max_fpr=0.3)
+    scalar_metrics['auc_max_fpr_0.1'] = roc_auc_score_new(y_true, y_score, max_fpr=0.1)
+    scalar_metrics['auc_max_fpr_0.01'] = roc_auc_score_new(y_true, y_score, max_fpr=0.01)
     scalar_metrics['uar'] = UAR(y_true, y_pred)
 
     TP, FP, TN, FN = true_false_positives_negatives(y_true, y_pred)
@@ -389,14 +426,23 @@ def compute_scalar_metrics(y_true, y_score, threshold=0.5):
     scalar_metrics['tn'] = TN
     scalar_metrics['fn'] = FN
 
+    # mean
     scalar_metrics['tpr@fpr=0.01'] = classification_rate_at_fixed(y_true, y_score, positive=True, true_fixed=False, fixed_rate=0.01)
     scalar_metrics['tpr@fpr=0.001'] = classification_rate_at_fixed(y_true, y_score, positive=True, true_fixed=False, fixed_rate=0.001)
     scalar_metrics['tnr@fnr=0.01'] = classification_rate_at_fixed(y_true, y_score, positive=False, true_fixed=False, fixed_rate=0.01)
     scalar_metrics['fpr@tpr=0.5'] = classification_rate_at_fixed(y_true, y_score, positive=True, true_fixed=True, fixed_rate=0.5)
     scalar_metrics['fnr@tnr=0.5'] = classification_rate_at_fixed(y_true, y_score, positive=False, true_fixed=True, fixed_rate=0.5)
-
     scalar_metrics['tpr@fpr=0.2'] = classification_rate_at_fixed(y_true, y_score, positive=True, true_fixed=False, fixed_rate=0.2)
     scalar_metrics['tpr@fpr=0.3'] = classification_rate_at_fixed(y_true, y_score, positive=True, true_fixed=False, fixed_rate=0.3)
+
+    # std
+    scalar_metrics['tpr@fpr=0.01_std'] = classification_rate_at_fixed_std(y_true, y_score, positive=True, true_fixed=False, fixed_rate=0.01)
+    scalar_metrics['tpr@fpr=0.001_std'] = classification_rate_at_fixed_std(y_true, y_score, positive=True, true_fixed=False, fixed_rate=0.001)
+    scalar_metrics['tnr@fnr=0.01_std'] = classification_rate_at_fixed_std(y_true, y_score, positive=False, true_fixed=False, fixed_rate=0.01)
+    scalar_metrics['fpr@tpr=0.5_std'] = classification_rate_at_fixed_std(y_true, y_score, positive=True, true_fixed=True, fixed_rate=0.5)
+    scalar_metrics['fnr@tnr=0.5_std'] = classification_rate_at_fixed_std(y_true, y_score, positive=False, true_fixed=True, fixed_rate=0.5)
+    scalar_metrics['tpr@fpr=0.2_std'] = classification_rate_at_fixed_std(y_true, y_score, positive=True, true_fixed=False, fixed_rate=0.2)
+    scalar_metrics['tpr@fpr=0.3_std'] = classification_rate_at_fixed_std(y_true, y_score, positive=True, true_fixed=False, fixed_rate=0.3)
 
     return scalar_metrics
 
@@ -440,14 +486,13 @@ def make_latex_table(scalar_metrics, threshold):
     # body of the table
     # make 2D list for every section
     body_list = []
-    body_list.append(['TPR @ FPR=0.01', str(scalar_metrics['tpr@fpr=0.01']) + ' (default: ' + str(scalar_metrics['def_tpr@fpr=0.01']) + ')'])
-    body_list.append(['TPR @ FPR=0.001', str(scalar_metrics['tpr@fpr=0.001']) + ' (default: ' + str(scalar_metrics['def_tpr@fpr=0.001']) + ')' ])
-    body_list.append(['TNR @ FNR=0.01', str(scalar_metrics['tnr@fnr=0.01']) + ' (default: ' + str(scalar_metrics['def_tnr@fnr=0.01']) + ')' ])
-
-    body_list.append(['FPR @ TPR=0.5', str(scalar_metrics['fpr@tpr=0.5']) + ' (default: ' + str(scalar_metrics['def_fpr@tpr=0.5']) + ')'])
-    body_list.append(['FNR @ TNR=0.5', str(scalar_metrics['fnr@tnr=0.5']) + ' (default: ' + str(scalar_metrics['def_fnr@tnr=0.5']) + ')'])
-    body_list.append(['TPR @ FPR=0.2', str(scalar_metrics['tpr@fpr=0.2']) + ' (default: ' + str(scalar_metrics['def_tpr@fpr=0.2']) + ')'])
-    body_list.append(['TPR @ FPR=0.3', str(scalar_metrics['tpr@fpr=0.3']) + ' (default: ' + str(scalar_metrics['def_tpr@fpr=0.3']) + ')'])
+    body_list.append(['TPR @ FPR=0.01', str(scalar_metrics['tpr@fpr=0.01']) + '+-' + str(scalar_metrics['tpr@fpr=0.01_std']) + ' (default: ' + str(scalar_metrics['def_tpr@fpr=0.01']) + ')'])
+    body_list.append(['TPR @ FPR=0.001', str(scalar_metrics['tpr@fpr=0.001']) + '+-' + str(scalar_metrics['tpr@fpr=0.001_std']) + ' (default: ' + str(scalar_metrics['def_tpr@fpr=0.001']) + ')' ])
+    body_list.append(['TNR @ FNR=0.01', str(scalar_metrics['tnr@fnr=0.01']) + '+-' + str(scalar_metrics['tnr@fnr=0.01_std']) + ' (default: ' + str(scalar_metrics['def_tnr@fnr=0.01']) + ')' ])
+    body_list.append(['FPR @ TPR=0.5', str(scalar_metrics['fpr@tpr=0.5']) + '+-' + str(scalar_metrics['fpr@tpr=0.5_std']) + ' (default: ' + str(scalar_metrics['def_fpr@tpr=0.5']) + ')'])
+    body_list.append(['FNR @ TNR=0.5', str(scalar_metrics['fnr@tnr=0.5']) + '+-' + str(scalar_metrics['fnr@tnr=0.5_std']) + ' (default: ' + str(scalar_metrics['def_fnr@tnr=0.5']) + ')'])
+    body_list.append(['TPR @ FPR=0.2', str(scalar_metrics['tpr@fpr=0.2']) + '+-' + str(scalar_metrics['tpr@fpr=0.2_std']) + ' (default: ' + str(scalar_metrics['def_tpr@fpr=0.2']) + ')'])
+    body_list.append(['TPR @ FPR=0.3', str(scalar_metrics['tpr@fpr=0.3']) + '+-' + str(scalar_metrics['tpr@fpr=0.3_std']) + ' (default: ' + str(scalar_metrics['def_tpr@fpr=0.3']) + ')'])
 
     latex += array_as_latex_table(body_list)
 
@@ -467,6 +512,9 @@ def make_latex_table(scalar_metrics, threshold):
     body_list.append(['Area under ROC curve', str(scalar_metrics['auc']) + ' (default: ' + str(scalar_metrics['def_auc']) + ')' ])
     body_list.append(['Area under ROC curve to max. FPR = 0.2', str(scalar_metrics['auc_max_fpr_0.2']) + ' (default: ' + str(scalar_metrics['def_auc_max_fpr_0.2']) + ')'])
     body_list.append(['Area under ROC curve to max. FPR = 0.3', str(scalar_metrics['auc_max_fpr_0.3']) + ' (default: ' + str(scalar_metrics['def_auc_max_fpr_0.3']) + ')'])
+
+    body_list.append(['Area under ROC curve to max. FPR = 0.1', str(scalar_metrics['auc_max_fpr_0.1']) + ' (default: ' + str(scalar_metrics['def_auc_max_fpr_0.1']) + ')'])
+    body_list.append(['Area under ROC curve to max. FPR = 0.01', str(scalar_metrics['auc_max_fpr_0.01']) + ' (default: ' + str(scalar_metrics['def_auc_max_fpr_0.01']) + ')'])
 
     latex += array_as_latex_table(body_list)
 
