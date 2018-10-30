@@ -17,7 +17,7 @@ import numpy as np
 
 
 
-def plot_roc(k_th_fold, ts_id, time, y_true, y_score, model_labels, evaluation_path, n_test_rounds=3, default=False, cut_off_point=1e-3):
+def plot_roc(k_th_fold, ts_id, time, y_true, y_score, model_labels, evaluation_path, n_test_rounds=10, default=False, cut_off_point=1e-3, confidence = "gaussian"):
     """
     Plotting an ROC for time series data.
 
@@ -46,6 +46,7 @@ def plot_roc(k_th_fold, ts_id, time, y_true, y_score, model_labels, evaluation_p
     :param y_score: numpy.array (if one model) or list (if multiple models)
     :param evaluation_path: numpy.array (if one model) or list (if multiple models)
     :param n_test_rounds=3: split the arrays into n test rows, only for the purpose of computing confidence bounds only
+    :param confidence="gaussian": compute a 95% - confidence interval for the mean ("gaussian" or "nonparametric")
     :return: none (saved plot)
 
     TODO v0.1
@@ -221,8 +222,15 @@ def plot_roc(k_th_fold, ts_id, time, y_true, y_score, model_labels, evaluation_p
             std = tprs.std(axis=0)
 
             # confidence bound is one standard deviation into each direction
-            tprs_upper = np.minimum(mean_tprs + std, 1)
-            tprs_lower = mean_tprs - std
+            if confidence == "gaussian":
+                tprs_upper = np.minimum(mean_tprs + 1.96 * std / np.sqrt(n_test_rounds), 1)
+                tprs_lower = np.maximum(mean_tprs - 1.96 * std / np.sqrt(n_test_rounds), 0)
+            elif confidence == "nonparametric":
+                # Non parametric 95 %
+                tprs_upper = np.percentile(mean_tprs, 97.5, axis = 0)
+                tprs_lower = np.percentile(mean_tprs, 2.5, axis = 0)
+            else:
+                raise ValueError('Confidence {} unknown'.format(confidence))
 
             if style == 'single':
                 average_color = 'red'
